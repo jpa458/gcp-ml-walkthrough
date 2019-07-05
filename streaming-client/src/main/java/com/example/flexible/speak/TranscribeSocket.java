@@ -16,37 +16,27 @@
 
 package com.example.flexible.speak;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.speech.v1beta1.RecognitionConfig;
-import com.google.cloud.speech.v1beta1.RecognitionConfig.AudioEncoding;
-import com.google.cloud.speech.v1beta1.SpeechGrpc;
-import com.google.cloud.speech.v1beta1.StreamingRecognitionConfig;
-import com.google.cloud.speech.v1beta1.StreamingRecognitionResult;
-import com.google.cloud.speech.v1beta1.StreamingRecognizeRequest;
-import com.google.cloud.speech.v1beta1.StreamingRecognizeResponse;
+import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.cloud.speech.v1.*;
+import com.google.cloud.speech.v1.RecognitionConfig.AudioEncoding;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.auth.ClientAuthInterceptor;
-import io.grpc.stub.StreamObserver;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class TranscribeSocket extends WebSocketAdapter
-    implements StreamObserver<StreamingRecognizeResponse> {
+    implements ApiStreamObserver<StreamingRecognizeResponse> {
 
   private static final Logger logger = Logger.getLogger(TranscribeSocket.class.getName());
-  StreamObserver<StreamingRecognizeRequest> requestObserver;
+  ApiStreamObserver<StreamingRecognizeRequest> requestObserver;
+
   private Gson gson;
-  ManagedChannel channel;
+  SpeechClient speech;
 
   public TranscribeSocket() {
     gson = new Gson();
@@ -59,9 +49,9 @@ public class TranscribeSocket extends WebSocketAdapter
   public void onWebSocketBinary(byte[] payload, int offset, int len) {
     if (isConnected()) {
       StreamingRecognizeRequest request =
-          StreamingRecognizeRequest.newBuilder()
-              .setAudioContent(ByteString.copyFrom(payload, offset, len))
-              .build();
+              StreamingRecognizeRequest.newBuilder()
+                      .setAudioContent(ByteString.copyFrom(payload, offset, len))
+                      .build();
       requestObserver.onNext(request);
     }
   }
@@ -76,25 +66,28 @@ public class TranscribeSocket extends WebSocketAdapter
       logger.info(String.format("Got sampleRate: %s", constraints.sampleRate));
 
       try {
-        channel = createChannel("speech.googleapis.com", 443);
-        requestObserver = SpeechGrpc.newStub(channel).streamingRecognize(this);
+        speech = SpeechClient.create();
+        BidiStreamingCallable<StreamingRecognizeRequest, StreamingRecognizeResponse> callable =
+                speech.streamingRecognizeCallable();
+
+        requestObserver = callable.bidiStreamingCall(this);
         // Build and send a StreamingRecognizeRequest containing the parameters for
         // processing the audio.
         RecognitionConfig config =
-            RecognitionConfig.newBuilder()
-            .setEncoding(AudioEncoding.LINEAR16)
-            .setSampleRate(constraints.sampleRate)
-            .setLanguageCode("en-US")
-            .build();
+                RecognitionConfig.newBuilder()
+                        .setEncoding(AudioEncoding.LINEAR16)
+                        .setSampleRateHertz(constraints.sampleRate)
+                        .setLanguageCode("en-US")
+                        .build();
         StreamingRecognitionConfig streamingConfig =
-            StreamingRecognitionConfig.newBuilder()
-            .setConfig(config)
-            .setInterimResults(true)
-            .setSingleUtterance(false)
-            .build();
+                StreamingRecognitionConfig.newBuilder()
+                        .setConfig(config)
+                        .setInterimResults(true)
+                        .setSingleUtterance(false)
+                        .build();
 
         StreamingRecognizeRequest initial =
-            StreamingRecognizeRequest.newBuilder().setStreamingConfig(streamingConfig).build();
+                StreamingRecognizeRequest.newBuilder().setStreamingConfig(streamingConfig).build();
         requestObserver.onNext(initial);
 
         getRemote().sendString(message);
@@ -105,11 +98,7 @@ public class TranscribeSocket extends WebSocketAdapter
   }
 
   public void closeApiChannel() {
-    try {
-      channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      logger.log(Level.WARNING, "Error closing api channel", e);
-    }
+    speech.close();
   }
 
   /**
@@ -144,8 +133,9 @@ public class TranscribeSocket extends WebSocketAdapter
     }
 
     try {
-    	
+
       StreamingRecognitionResult result = results.get(0);
+      logger.info("Got result " + result);
       getRemote().sendString(gson.toJson(result));
     } catch (IOException e) {
       logger.log(Level.WARNING, "Error sending to websocket", e);
@@ -174,18 +164,4 @@ public class TranscribeSocket extends WebSocketAdapter
     closeApiChannel();
   }
 
-  // Taken wholesale from StreamingRecognizeClient.java
-  private static final List<String> OAUTH2_SCOPES =
-      Arrays.asList("https://www.googleapis.com/auth/cloud-platform");
-
-  static ManagedChannel createChannel(String host, int port) throws IOException {
-    GoogleCredentials creds = GoogleCredentials.getApplicationDefault();
-    creds = creds.createScoped(OAUTH2_SCOPES);
-    ManagedChannel channel =
-        ManagedChannelBuilder.forAddress(host, port)
-            .intercept(new ClientAuthInterceptor(creds, Executors.newSingleThreadExecutor()))
-            .build();
-
-    return channel;
-  }
 }

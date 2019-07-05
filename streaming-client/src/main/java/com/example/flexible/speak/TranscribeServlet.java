@@ -26,7 +26,7 @@ import javax.servlet.annotation.WebServlet;
 @SuppressWarnings("serial")
 public class TranscribeServlet extends WebSocketServlet {
 
-  
+  // Timeout in milliseconds
   private static final int TIMEOUT = 10000;
 
   @Override

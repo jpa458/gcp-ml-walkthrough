@@ -15,7 +15,7 @@ var videoCanvas = document.getElementById('video_canvas');
 var language = document.getElementById("supportedLang");
 
 // Audio variables
-var context = new AudioContext();
+var audioContext = {};
 
 // Video variables
 var expressionList = [{
@@ -56,8 +56,9 @@ var constraints = window.constraints = {
 
 function handleSuccess(stream) {
 	startVideo(stream);
-	startAudio(stream); //initTranscript(writeResult);
-	//var timer = setInterval(takePicture, 300); // This will run takePicture every 300ms, caution: GCP Vision quotas
+	startAudio(stream);
+	//initTranscript(writeResult);
+//var timer = setInterval(takePicture, 300); // This will run takePicture every 300ms, caution: GCP Vision quotas
 }
 
 function startVideo(stream) {
@@ -73,18 +74,18 @@ function startVideo(stream) {
 }
 
 function startAudio(stream) {
-	var microphone = context.createMediaStreamSource(stream);
-	microphone.connect(context.createAnalyser());
+	var microphone = audioContext.createMediaStreamSource(stream);
+	microphone.connect(audioContext.createAnalyser());
 
-	initWebsocket(context, microphone);
+	initWebsocket(audioContext, microphone);
 }
 
-function initWebsocket(context, microphone) {
+function initWebsocket(audioContext, microphone) {
 	var socket;
 	var sourceNode;
 
 	// Create a node that sends raw bytes across the websocket
-	var scriptNode = context.createScriptProcessor(4096, 1, 1);
+	var scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
 	// Need the maximum value for 16-bit signed samples, to convert from float.
 	const MAX_INT = Math.pow(2, 16 - 1) - 1;
 	scriptNode.addEventListener('audioprocess', function(e) {
@@ -125,13 +126,13 @@ function initWebsocket(context, microphone) {
 
 				// initializes the mic and script
 				microphone.connect(scriptNode);
-				scriptNode.connect(context.destination);
+				scriptNode.connect(audioContext.destination);
 			}, {
 				once: true
 			});
 
 			socket.send(JSON.stringify({
-				sampleRate: context.sampleRate
+				sampleRate: audioContext.sampleRate
 			}));
 		}).catch(console.log.bind(console));
 	}
@@ -274,11 +275,14 @@ function runVision(data) {
 				var face = result.responses[0].faceAnnotations[i];
 				var rect = face.fdBoundingPoly.vertices;
 
+				var verticalCorrection = 50;
+				var horizontalCorrection = 145;
+
 				videoContext.font = "18pt Arial";
 				videoContext.fillStyle = 'green';
-				videoContext.fillText('Face ' + (i + 1), rect[0].x, rect[0].y - 5);
+				videoContext.fillText('Face ' + (i + 1), rect[0].x+horizontalCorrection, rect[0].y - 5+verticalCorrection);
 
-				videoContext.rect(rect[0].x, rect[0].y, rect[2].x - rect[0].x, rect[2].y - rect[0].y);
+				videoContext.rect(rect[0].x+horizontalCorrection, rect[0].y+verticalCorrection, rect[2].x - rect[0].x, rect[2].y - rect[0].y);
 				videoContext.lineWidth = 4;
 				videoContext.strokeStyle = 'green';
 			}
@@ -360,14 +364,14 @@ function openTab(tabName) {
 	var i;
 	var tabContents = document.getElementsByClassName("tabcontent");
 	var tabLinks = document.getElementsByClassName("tablinks");
-	
+
 	for (i = 0; i < tabContents.length; i++) {
 		tabContents[i].style.display = "none";
 	}
 	for (i = 0; i < tabLinks.length; i++) {
 		tabLinks[i].className = tabLinks[i].className.replace(" active", "");
 	}
-	
+
 	document.getElementById(tabName).style.display = "block";
 }
 
@@ -376,20 +380,20 @@ function openTech(el, tabName) {
 	var i;
 	var techContents = document.getElementsByClassName("techcontent");
 	var techLinks = document.getElementsByClassName("techlinks");
-	
+
 	for (i = 0; i < techContents.length; i++) {
 		techContents[i].style.display = "none";
 		techContents[i].style.visibility = "hidden";
 	}
-	
+
 	for (i = 0; i < techLinks.length; i++) {
 		techLinks[i].className = techLinks[i].className.replace(" active", "");
 		techLinks[i].parentNode.style.border = "3px solid white";
 	}
-	
+
 	document.getElementById(tabName).style.display = "block";
 	document.getElementById(tabName).style.visibility = "visible";
-	
+
 	if(el) {
 		el.parentNode.style.border = "3px solid black";
 	}
@@ -435,6 +439,11 @@ function createLangElement(lang) {
 	return l;
 }
 
+function start(){
+	audioContext = new AudioContext();
+	console.log("starting up");
+	navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);
+}
 
 openTab('Faces');
-navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);
+//navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);

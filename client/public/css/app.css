@@ -1,12 +1,12 @@
 .left-half {
-  position: absolute;
-  left: 0px;
+  float:left;
+
   width: 50%;
 }
 
 .right-half {
-  position: absolute;
-  right: 0px;
+
+  float: left;
   width: 50%;
 }
 
@@ -14,16 +14,16 @@
 	width:100%;
 }
 
-.imgBlock { 
+.imgBlock {
   border: 3px solid white;
-  float:left; 
-  padding-left:10px;
+  float:left;
+  padding-left:30px;
   padding-right:10px;
-} 
+}
 
-.imgBlock:hover { 
-  border: 3px solid black; 
-} 
+.imgBlock:hover {
+  border: 3px solid black;
+}
 
 .tabcontent {
 	padding: 10px;

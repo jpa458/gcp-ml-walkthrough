@@ -10,7 +10,7 @@ app.use('/public', express.static(path.join(__dirname, '/public')));
 
 app.get('/', function(req, res) {
 	console.log('retrieve homepage');
-  res.sendFile(path.join(__dirname, '/public/index.html'));
+  res.sendFile(path.join(__dirname, '/public/index2.html'));
 });
 
 
