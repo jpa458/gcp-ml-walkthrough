@@ -1,3 +1,4 @@
+var fs = require('fs');
 var express = require('express');
 var path = require('path');
 var bodyParser = require('body-parser');
@@ -6,12 +7,12 @@ var app = express();
 app.use( bodyParser.json() );
 
 app.get("/public/js/app.js", function(req, res) {
-    fs.readFile(path.join(__dirname, 'public', 'js', 'app.js'), function(err, data) {
+    fs.readFile(path.join(__dirname, 'public', 'js', 'app.js'), 'utf8',function(err, data) {
         if (err) {
             res.sendStatus(404);
         } else {
             // modify the data here, then send it
-						data = data.replace(/APIKEY/g, process.env.APIKEY);
+						data = data.toString().replace(/APIKEY/g, process.env.APIKEY);
 						data = data.replace(/IPADDR/g, process.env.IPADDR);
 
             res.send(data);
