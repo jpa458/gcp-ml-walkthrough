@@ -5,7 +5,7 @@ var bodyParser = require('body-parser');
 var app = express();
 app.use( bodyParser.json() );
 
-app.get("/public/app.js", function(req, res) {
+app.get("/public/js/app.js", function(req, res) {
     fs.readFile(path.join(__dirname, 'public', 'js', 'app.js'), function(err, data) {
         if (err) {
             res.sendStatus(404);
