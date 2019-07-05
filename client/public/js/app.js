@@ -1,6 +1,5 @@
-var apiKey =  process.env.APIKEY;
-var speechApiIP = process.env.IPADDR;
-
+var apiKey =  'APIKEY';
+var speechApiIP = 'IPADDR';
 
 var translateUri = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
 var translateLanguagesUri = `https://translation.googleapis.com/language/translate/v2/languages?key=${apiKey}&target=en`;

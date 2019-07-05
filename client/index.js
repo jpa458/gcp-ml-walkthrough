@@ -5,6 +5,21 @@ var bodyParser = require('body-parser');
 var app = express();
 app.use( bodyParser.json() );
 
+app.get("/public/app.js", function(req, res) {
+    fs.readFile(path.join(__dirname, 'public', 'js', 'app.js'), function(err, data) {
+        if (err) {
+            res.sendStatus(404);
+        } else {
+            // modify the data here, then send it
+						data = data.replace(/APIKEY/g, process.env.APIKEY);
+						data = data.replace(/IPADDR/g, process.env.IPADDR);
+
+            res.send(data);
+        }
+    });
+});
+
+
 // Serve static assets from the /public folder
 app.use('/public', express.static(path.join(__dirname, '/public')));
 
