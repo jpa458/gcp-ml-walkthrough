@@ -1,5 +1,6 @@
-var apiKey = '<API_KEY>';
-var speechApiIP = '<GCE_INSTANCE_EXTERNAL_IP>';
+var apiKey =  process.env.APIKEY;
+var speechApiIP = process.env.IPADDR;
+
 
 var translateUri = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
 var translateLanguagesUri = `https://translation.googleapis.com/language/translate/v2/languages?key=${apiKey}&target=en`;
