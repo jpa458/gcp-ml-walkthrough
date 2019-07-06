@@ -275,8 +275,8 @@ function runVision(data) {
 				var face = result.responses[0].faceAnnotations[i];
 				var rect = face.fdBoundingPoly.vertices;
 
-				var verticalCorrection = 50;
-				var horizontalCorrection = 145;
+				var verticalCorrection = 0;
+				var horizontalCorrection = 0;
 
 				videoContext.font = "18pt Arial";
 				videoContext.fillStyle = 'green';

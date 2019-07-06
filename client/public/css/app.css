@@ -41,3 +41,12 @@ table {
 th {
     text-align: left;
 }
+
+.container_row{
+  display: grid;
+}
+
+.layer1, .layer2{
+  grid-column: 1;
+  grid-row: 1;
+}
