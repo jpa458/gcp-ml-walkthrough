@@ -1,4 +1,4 @@
-*\*This is not an official GCP repository*
+*This is not an official GCP repository*
 
 # Google Cloud ML Walkthrough Demo
 
@@ -43,7 +43,7 @@ This application uses [Google Cloud Speech streaming API](https://cloud.google.c
 	```
 1. Clone this project
 	```
-	git clone https://github.com/tfrantzen/gcp-ml-walkthrough.git
+	git clone https://github.com/jpa458/gcp-ml-walkthrough.git
 	```
 1. Open directory
 	```
@@ -58,7 +58,7 @@ This application uses [Google Cloud Speech streaming API](https://cloud.google.c
 1. Open the Google Cloud Shell
 1. Clone project
 	```
-	git clone https://github.com/tfrantzen/gcp-ml-walkthrough.git
+	git clone https://github.com/jpa458/gcp-ml-walkthrough.git
 	```
 1. Open directory
 	```
@@ -93,33 +93,36 @@ This application uses [Google Cloud Speech streaming API](https://cloud.google.c
 
 
 ## Docker containers
-The applications can also be containerised. Each application (client and streaming-client) have Dockerfiles.
+The applications can also be containerised. Each application (client and streaming-client) has a Dockerfile.
 
 1. Streaming Client
+
 As this is just a demo we dockerise the app and run it via maven/jetty.
 
 For example:
+```
 docker build -t streaming-client .
 docker tag streaming-client gcr.io/<PROJECT_ID>/streaming-client
 docker push gcr.io/<PROJECT_ID>/streaming-client
-
+```
 You can then reference the container when creating a GCP VM instance.
-Note this app has a built in self signed certificate and the HTTPS port must be open in the firewall. This is required for the secure websocket connection from the browser for streaming the audio.
+
+Note this app has a built in self signed certificate and the HTTPS port must be open in the firewall. This is required for the secure websocket connection from the browser for audio streaming.
 
 2. Client
 
+```
 docker build -t client .
 docker tag streaming-client gcr.io/<PROJECT_ID>/client
 docker push gcr.io/<PROJECT_ID>/client
+```
 
-To run the client you can execute the following command from Cloud Shell and use Web Preview to access the site on port 8080 (which is the default).
-
+To run the client you can execute the following command from Cloud Shell and use Web Preview to access the site on port 8080 (which is the default but can be overridden with PORT env variable).
+```
 docker run -p 8080:8080 -e APIKEY=<API_KEY>  -e IPADDR=<STREAMING CLIENT IP ADDR>  gcr.io/<PROJECT_ID>/client
-
+```
 Access to the camera/audio works because it is being invoked in a "localhost" scenario.
-
-(The container also supports a PORT environment variable that defaults to 8080)
 
 If you want to run this client container as a GCP VM you'll need to use HTTPS otherwise the browser will not allow access to the camera/audio.  I achieved this in my GCP project by using a HTTPS Load Balancer which terminates at the LB and carries on with HTTP on port 80.  In this case, also configure the PORT=80 env variable when running the container.  
 
-Another option is to run a self signed certificate with Node Express over HTTPS, but I haven't tried it.
+Alternative is to run a self signed certificate with Node Express over HTTPS.
