@@ -113,7 +113,7 @@ Note this app has a built in self signed certificate and the HTTPS port must be 
 
 ```
 docker build -t client .
-docker tag streaming-client gcr.io/<PROJECT_ID>/client
+docker tag client gcr.io/<PROJECT_ID>/client
 docker push gcr.io/<PROJECT_ID>/client
 ```
 
